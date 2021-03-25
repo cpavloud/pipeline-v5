@@ -90,6 +90,9 @@ def get_args(a):
                         required=False, help='Stats ffn FGS')
     parser.add_argument('-f', '--fgs-faa', action='store', dest='fgs-faa',
                         required=False, help='Stats faa FGS')
+
+    parser.add_argument('-p', '--caller-priority', action='store', dest='caller-prio',
+                        required=False, help='Caller priority: prodigal,fgs or fgs,prodigal')
     parser.add_argument("-v", "--verbose", help="verbose output", dest="verbose", action="count", required=False)
     return vars(parser.parse_args())
 
@@ -254,9 +257,10 @@ def get_regions_prodigal(fn):
             if line[:12] == '# Model Data':
                 continue
             if line[:15] == '# Sequence Data':
-                m = re.search('seqhdr="(\S+)"', line)
+                m = re.search('seqhdr="(\S+)', line)
                 if m:
                     id = m.group(1)
+                
                 regions[id] = {}
                 regions[id]['+'] = []
                 regions[id]['-'] = []
@@ -304,7 +308,7 @@ def merge_predictions(predictions, callers):
 
     # first set of predictions takes priority - just transfer them
     new_predictions[callers[0]] = predictions[callers[0]]
-
+    
     # for now assume only two callers, but can be extended
     new_predictions[callers[1]] = {}  # empty set for second priority caller
     for seq in predictions[callers[1]]:
@@ -361,9 +365,14 @@ if __name__ == "__main__":
     summary = {}
     all_predictions = {}
     files = {}
-    caller_priority = ['fgs', 'prodigal']
-    if args['prodigal-out']:
+    caller_priority = []
+    if args['caller-prio']:
+        caller_priority = args['caller-prio'].split(",")
+    else:
         caller_priority = ['prodigal', 'fgs']
+    logging.info('Caller priority: 1. {}, 2. {}'.format(caller_priority[0], caller_priority[1]))
+
+    if args['prodigal-out']:
         logging.info('Prodigal presented')
         logging.info("Filtering Prodigal sequences...")
         filter_output_file_faa(args['prodigal-faa'], 's/\*$//')
@@ -405,7 +414,7 @@ if __name__ == "__main__":
 
     # Output fasta files and summary (json)
     logging.info("Writing output files...")
-    faselector_exec = 'faselector'
+    faselector_exec = './faselector'
     if not os.path.exists('temp-dir'):
         os.makedirs('temp-dir')
 
@@ -413,7 +422,7 @@ if __name__ == "__main__":
     output_files(merged_predictions, summary, files, 'temp-dir', faselector_exec)
 
     # Remove intermediate files
-    for type in files:
-        if not type == 'merged':
-            for fn in files[type]:
-                os.remove(fn)
+    #for type in files:
+    #    if not type == 'merged':
+    #        for fn in files[type]:
+    #            os.remove(fn)
