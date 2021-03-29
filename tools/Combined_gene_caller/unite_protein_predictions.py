@@ -414,7 +414,7 @@ if __name__ == "__main__":
 
     # Output fasta files and summary (json)
     logging.info("Writing output files...")
-    faselector_exec = './faselector'
+    faselector_exec = 'faselector'
     if not os.path.exists('temp-dir'):
         os.makedirs('temp-dir')
 
@@ -422,7 +422,7 @@ if __name__ == "__main__":
     output_files(merged_predictions, summary, files, 'temp-dir', faselector_exec)
 
     # Remove intermediate files
-    #for type in files:
-    #    if not type == 'merged':
-    #        for fn in files[type]:
-    #            os.remove(fn)
+    for type in files:
+        if not type == 'merged':
+            for fn in files[type]:
+                os.remove(fn)
